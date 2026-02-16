@@ -1,11 +1,13 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { BookingRequest, Clinic } from '../models/index.js';
-import type { BookingStatus, Locale } from '../types/index.js';
+import type { Locale } from '../types/index.js';
 import { sendBookingEmail, formatDateForEmail, formatPriceForEmail } from '../services/email.js';
+import { requireOpsAuth } from '../plugins/ops-auth.js';
 
 const opsRoutes: FastifyPluginAsync = async (fastify) => {
-  // TODO: Add authentication middleware for ops routes
+  // Apply authentication to all ops routes
+  fastify.addHook('preHandler', requireOpsAuth);
 
   // GET /v1/ops/booking-requests - Get booking queue
   fastify.get('/booking-requests', async (request, reply) => {

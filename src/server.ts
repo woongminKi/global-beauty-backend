@@ -7,9 +7,11 @@ import swaggerUi from '@fastify/swagger-ui';
 
 import mongodbPlugin from './plugins/mongodb.js';
 import authPlugin from './plugins/auth.js';
+import opsAuthPlugin from './plugins/ops-auth.js';
 import clinicsRoutes from './routes/clinics.js';
 import bookingsRoutes from './routes/bookings.js';
 import opsRoutes from './routes/ops.js';
+import opsAuthRoutes from './routes/ops-auth.js';
 import authRoutes from './routes/auth.js';
 
 const fastify = Fastify({
@@ -33,8 +35,9 @@ await fastify.register(cookie, {
   secret: process.env.SESSION_SECRET || 'change-this-secret-in-production',
 });
 
-// Auth helper (provides request.getCurrentUser)
-await fastify.register(authPlugin);
+// Auth helpers
+await fastify.register(authPlugin); // provides request.getCurrentUser
+await fastify.register(opsAuthPlugin); // provides request.getOpsUser
 
 // Swagger documentation
 await fastify.register(swagger, {
@@ -68,6 +71,7 @@ fastify.get('/health', async () => {
 // API routes
 await fastify.register(clinicsRoutes, { prefix: '/v1/clinics' });
 await fastify.register(bookingsRoutes, { prefix: '/v1/booking-requests' });
+await fastify.register(opsAuthRoutes, { prefix: '/v1/ops/auth' });
 await fastify.register(opsRoutes, { prefix: '/v1/ops' });
 await fastify.register(authRoutes, { prefix: '/v1/auth' });
 
