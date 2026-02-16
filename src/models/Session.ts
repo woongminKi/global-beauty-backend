@@ -31,7 +31,6 @@ const SessionSchema = new Schema<ISession>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
     revokedAt: { type: Date },
     userAgent: { type: String },
@@ -42,9 +41,8 @@ const SessionSchema = new Schema<ISession>(
   }
 );
 
-// Indexes
+// Indexes (token already has unique: true in schema)
 SessionSchema.index({ userId: 1, expiresAt: 1 });
-SessionSchema.index({ token: 1 });
 
 // TTL index - auto delete expired sessions after 7 days
 SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 604800 });

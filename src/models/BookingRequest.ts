@@ -122,10 +122,8 @@ const BookingRequestSchema = new Schema<IBookingRequest>(
   }
 );
 
-// Indexes
+// Indexes (accessCode already has unique: true in schema)
 BookingRequestSchema.index({ status: 1, createdAt: -1 });
-BookingRequestSchema.index({ accessCode: 1 });
-BookingRequestSchema.index({ guestEmail: 1 });
 BookingRequestSchema.index({ guestEmail: 1, createdAt: -1 }); // For my-requests query
 
 export const BookingRequest = mongoose.model<IBookingRequest>(
