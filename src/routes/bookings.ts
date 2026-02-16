@@ -2,6 +2,8 @@ import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { BookingRequest, Clinic } from '../models/index.js';
 import { generateAccessCode } from '../utils/helpers.js';
+import { sendBookingEmail, formatDateForEmail } from '../services/email.js';
+import type { Locale } from '../types/index.js';
 
 const bookingsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /v1/booking-requests/my-requests - Get all bookings for a user
@@ -170,7 +172,22 @@ const bookingsRoutes: FastifyPluginAsync = async (fastify) => {
 
     await bookingRequest.save();
 
-    // TODO: Send confirmation email/notification
+    // Send confirmation email
+    if (email) {
+      const clinicDoc = await Clinic.findById(data.clinicId).lean();
+      const clinicName = clinicDoc?.name?.[data.locale] || clinicDoc?.name?.en || 'Unknown Clinic';
+
+      sendBookingEmail('bookingReceived', {
+        to: email,
+        locale: data.locale as Locale,
+        accessCode,
+        clinicName,
+        procedure: data.procedure,
+        preferredDate: formatDateForEmail(data.preferredDate, data.locale as Locale),
+      }).catch((err) => {
+        fastify.log.error('Failed to send booking confirmation email:', err);
+      });
+    }
 
     return reply.status(201).send({
       success: true,

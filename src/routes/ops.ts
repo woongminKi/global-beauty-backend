@@ -1,7 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { BookingRequest } from '../models/index.js';
-import type { BookingStatus } from '../types/index.js';
+import { BookingRequest, Clinic } from '../models/index.js';
+import type { BookingStatus, Locale } from '../types/index.js';
+import { sendBookingEmail, formatDateForEmail, formatPriceForEmail } from '../services/email.js';
 
 const opsRoutes: FastifyPluginAsync = async (fastify) => {
   // TODO: Add authentication middleware for ops routes
@@ -136,7 +137,35 @@ const opsRoutes: FastifyPluginAsync = async (fastify) => {
 
     await booking.save();
 
-    // TODO: Send notification to user based on status change
+    // Send notification email for confirmed/cancelled status
+    if (booking.guestEmail && (data.status === 'confirmed' || data.status === 'cancelled')) {
+      const clinicDoc = await Clinic.findById(booking.clinicId).lean();
+      const locale = (booking.locale || 'en') as Locale;
+      const clinicName = clinicDoc?.name?.[locale] || clinicDoc?.name?.en || 'Unknown Clinic';
+
+      const emailData = {
+        to: booking.guestEmail,
+        locale,
+        accessCode: booking.accessCode,
+        clinicName,
+        procedure: booking.procedure,
+        preferredDate: formatDateForEmail(booking.preferredDate, locale),
+        confirmedDate: booking.confirmedOption?.date
+          ? formatDateForEmail(booking.confirmedOption.date, locale)
+          : undefined,
+        confirmedTime: booking.confirmedOption?.timeSlot,
+        confirmedPrice: booking.confirmedOption?.price
+          ? formatPriceForEmail(booking.confirmedOption.price, booking.budget?.currency || 'KRW')
+          : undefined,
+        cancelReason: data.note,
+      };
+
+      const emailType = data.status === 'confirmed' ? 'bookingConfirmed' : 'bookingCancelled';
+
+      sendBookingEmail(emailType, emailData).catch((err) => {
+        fastify.log.error(`Failed to send ${emailType} email:`, err);
+      });
+    }
 
     return reply.send({
       success: true,
