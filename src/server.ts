@@ -10,6 +10,7 @@ import authPlugin from './plugins/auth.js';
 import opsAuthPlugin from './plugins/ops-auth.js';
 import clinicsRoutes from './routes/clinics.js';
 import bookingsRoutes from './routes/bookings.js';
+import reviewsRoutes from './routes/reviews.js';
 import opsRoutes from './routes/ops.js';
 import opsAuthRoutes from './routes/ops-auth.js';
 import authRoutes from './routes/auth.js';
@@ -71,6 +72,7 @@ fastify.get('/health', async () => {
 // API routes
 await fastify.register(clinicsRoutes, { prefix: '/v1/clinics' });
 await fastify.register(bookingsRoutes, { prefix: '/v1/booking-requests' });
+await fastify.register(reviewsRoutes, { prefix: '/v1/reviews' });
 await fastify.register(opsAuthRoutes, { prefix: '/v1/ops/auth' });
 await fastify.register(opsRoutes, { prefix: '/v1/ops' });
 await fastify.register(authRoutes, { prefix: '/v1/auth' });
